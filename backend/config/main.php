@@ -22,7 +22,6 @@ return [
             'identityCookie' => ['name' => '_identity-backend', 'httpOnly' => true],
         ],
         'session' => [
-            // this is the name of the session cookie used for login on the backend
             'name' => 'advanced-backend',
         ],
         'log' => [
@@ -30,7 +29,8 @@ return [
             'targets' => [
                 [
                     'class' => \yii\log\FileTarget::class,
-                    'levels' => ['error', 'warning'],
+                    'levels' => ['error', 'warning', 'info'], // Include 'info' level for detailed logging
+                    'logFile' => '@runtime/logs/app.log',
                 ],
             ],
         ],
@@ -40,9 +40,23 @@ return [
         'urlManager' => [
             'enablePrettyUrl' => true,
             'showScriptName' => false,
-            'rules' => [
-            ],
+            'rules' => [],
         ],
+        'assetManager' => [
+            'bundles' => [
+                'marqu3s\summernote\SummernoteAsset' => [
+                    'css' => [
+                        'summernote-bs5.css'
+                    ],
+                    'js' => [
+                        'summernote-bs5.js'
+                    ],
+                    'depends' => [
+                        'yii\bootstrap5\BootstrapPluginAsset',
+                    ]
+                ]
+            ]
+        ]
     ],
     'params' => $params,
 ];

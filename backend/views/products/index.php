@@ -27,25 +27,48 @@ $this->params['breadcrumbs'][] = $this->title;
         'dataProvider' => $dataProvider,
         'filterModel' => $searchModel,
         'columns' => [
-            ['class' => 'yii\grid\SerialColumn'],
 
-            'id',
-            'name',
-            'description:ntext',
-            'image',
+            [
+                'attribute' => 'id',
+                'contentOptions' => [
+                    'style' => 'width: 60px'
+                ]
+            ],
+            [
+                'attribute' => 'name',
+                'content' => function ($model) {
+                    return \yii\helpers\StringHelper::truncateWords($model->name, 7);
+                }
+            ],
+            [
+                'label' => 'Image',
+                'attribute' => 'image',
+                'content' => function ($model) {
+                    /** @var \common\models\Product $model */
+                    return Html::img($model->getImageUrl(), ['style' => 'width: 50px']);
+                }
+            ],
             'price',
             //'status',
             //'category_id',
             //'sub_category_id',
-            //'created_at',
-            //'updated_at',
+            [
+                'attribute' => 'created_at',
+                'format' => ['datetime'],
+                'contentOptions' => ['style' => 'white-space: nowrap']
+            ],
+            [
+                'attribute' => 'updated_at',
+                'format' => ['datetime'],
+                'contentOptions' => ['style' => 'white-space: nowrap']
+            ],
             //'created_by',
             //'updated_by',
             [
                 'class' => ActionColumn::className(),
                 'urlCreator' => function ($action, Products $model, $key, $index, $column) {
                     return Url::toRoute([$action, 'id' => $model->id]);
-                 }
+                }
             ],
         ],
     ]); ?>

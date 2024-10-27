@@ -3,6 +3,11 @@
 namespace common\models;
 
 use Yii;
+use yii\behaviors\BlameableBehavior;
+use yii\behaviors\TimestampBehavior;
+use yii\helpers\FileHelper;
+use yii\web\UploadedFile;
+use yii\db\ActiveRecord;
 
 /**
  * This is the model class for table "{{%products}}".
@@ -25,8 +30,13 @@ use Yii;
  * @property OrderItems[] $orderItems
  * @property SubCategories $subCategory
  */
-class Products extends \yii\db\ActiveRecord
-{
+class Products extends ActiveRecord
+{   
+    /**
+     * @var UploadedFile
+     */
+    public $imageFile;
+
     /**
      * {@inheritdoc}
      */
@@ -35,15 +45,32 @@ class Products extends \yii\db\ActiveRecord
         return '{{%products}}';
     }
 
+    public function behaviors(){
+        return [
+            TimestampBehavior::class => [
+                'class' => TimestampBehavior::class,
+                'attributes' => [
+                    ActiveRecord::EVENT_BEFORE_INSERT => ['created_at', 'updated_at'],
+                    ActiveRecord::EVENT_BEFORE_UPDATE => ['updated_at'],
+                ],
+                'value' => new \yii\db\Expression('NOW()'),
+            ],
+            BlameableBehavior::class => [
+                'class' => BlameableBehavior::class,
+            ],
+        ];
+    }
+
     /**
      * {@inheritdoc}
      */
     public function rules()
     {
         return [
-            [['name', 'price', 'status', 'category_id', 'sub_category_id', 'created_by', 'updated_by'], 'required'],
+            [['name', 'price', 'status', 'category_id', 'sub_category_id'], 'required'],
             [['description'], 'string'],
             [['price'], 'number'],
+            [['imageFile'], 'image', 'extensions' => 'png, jpg, jpeg, webp', 'maxSize' => 10 * 1024 * 1024],
             [['status', 'category_id', 'sub_category_id'], 'integer'],
             [['created_at', 'updated_at'], 'safe'],
             [['name', 'image', 'created_by', 'updated_by'], 'string', 'max' => 255],
@@ -61,9 +88,10 @@ class Products extends \yii\db\ActiveRecord
             'id' => 'ID',
             'name' => 'Name',
             'description' => 'Description',
-            'image' => 'Image',
+            'image' => 'Preview Image',
+            'imageFile' => 'Product Image',
             'price' => 'Price',
-            'status' => 'Status',
+            'status' => 'Published',
             'category_id' => 'Category ID',
             'sub_category_id' => 'Sub Category ID',
             'created_at' => 'Created At',
@@ -121,4 +149,52 @@ class Products extends \yii\db\ActiveRecord
     {
         return new \common\models\query\ProductsQuery(get_called_class());
     }
+
+    public function save($runValidation = true, $attributeNames = null) {
+        if ($this->imageFile instanceof UploadedFile) {
+            $this->image = '/products/' . Yii::$app->security->generateRandomString() . '/' . $this->imageFile->name;
+        } else {
+            Yii::error('No valid file instance', __METHOD__);
+        }
+
+        $transaction = Yii::$app->db->beginTransaction();
+        $ok = parent::save($runValidation, $attributeNames);
+        if ($ok && $this->imageFile instanceof UploadedFile) {
+            $fullPath = Yii::getAlias('@frontend/web/storage' . $this->image);
+            $dir = dirname($fullPath);
+
+            Yii::info('Saving file to: ' . $fullPath, __METHOD__);
+
+            if (!FileHelper::createDirectory($dir)) {
+                Yii::error('Failed to create directory: ' . $dir, __METHOD__);
+            } 
+
+            if (!$this->imageFile->saveAs($fullPath)) {
+                Yii::error('Failed to save file to: ' . $fullPath, __METHOD__);
+                $transaction->rollBack();
+                return false;
+            }
+        } else {
+            Yii::error('Failed to save model', __METHOD__);
+        }
+
+        $transaction->commit();
+        return $ok;
+    }
+
+    public function getImageUrl()
+    {
+        return self::formatImageUrl($this->image);
+    }
+
+    public static function formatImageUrl($imagePath)
+    {
+        if ($imagePath) {
+            return Yii::$app->params['frontendUrl'] . '/storage' . $imagePath;
+        }
+
+        return Yii::$app->params['frontendUrl'] . '/img/no_image_available.png';
+    }
+
 }
+
