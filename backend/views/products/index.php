@@ -48,8 +48,16 @@ $this->params['breadcrumbs'][] = $this->title;
                     return Html::img($model->getImageUrl(), ['style' => 'width: 50px']);
                 }
             ],
-            'price',
-            //'status',
+            'price:currency',
+            [
+                'attribute' => 'status',
+                'content' => function ($model) {
+                    /** @var \common\models\Product $model */
+                    return Html::tag('span', $model->status ? 'Active' : 'Draft', [
+                        'class' => $model->status ? 'badge badge-success' : 'badge badge-warning'
+                    ]);
+                }
+            ],
             //'category_id',
             //'sub_category_id',
             [

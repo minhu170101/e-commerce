@@ -18,7 +18,9 @@ use marqu3s\summernote\Summernote;
     <?= $form->field($model, 'description')->widget(Summernote::class) ?>
 
     <?= $form->field($model, 'price')->textInput([
-        'type' => 'number'
+        'maxlength' => true,
+        'type' => 'number',
+        'step' => '0.01'
     ]) ?>
 
     <?= $form->field($model, 'imageFile')->fileInput() ?>

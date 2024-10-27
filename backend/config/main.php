@@ -42,6 +42,13 @@ return [
             'showScriptName' => false,
             'rules' => [],
         ],
+        'formatter' => [
+            'class' => 'yii\i18n\Formatter',
+            'currencyCode' => '$', // Set your default currency code here
+            'dateFormat' => 'dd.MM.yyyy',
+            'decimalSeparator' => ',',
+            'thousandSeparator' => ' ',
+        ],
         'assetManager' => [
             'bundles' => [
                 'marqu3s\summernote\SummernoteAsset' => [

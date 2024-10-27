@@ -193,7 +193,21 @@ class Products extends ActiveRecord
             return Yii::$app->params['frontendUrl'] . '/storage' . $imagePath;
         }
 
-        return Yii::$app->params['frontendUrl'] . '/img/no_image_available.png';
+        return Yii::$app->params['frontendUrl'] . '/img/Image-not-found.png';
+    }
+
+    public function getShortDescription()
+    {
+        return \yii\helpers\StringHelper::truncateWords(strip_tags($this->description), 30);
+    }
+
+    public function afterDelete()
+    {
+        parent::afterDelete();
+        if ($this->image) {
+            $dir = Yii::getAlias('@frontend/web/storage'). dirname($this->image);
+            FileHelper::removeDirectory($dir);
+        }
     }
 
 }
